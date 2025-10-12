@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Add a new movie</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.title.label(class="form-label") }}
+            {{ form.title(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.genre.label(class="form-label") }}
+            {{ form.genre(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.year.label(class="form-label") }}
+            {{ form.year(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.description.label(class="form-label") }}
+            {{ form.description(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+<a href="{{ url_for('index') }}" class="btn btn-primary">Back</a>
+{% endblock %}
+</body>
+</html>

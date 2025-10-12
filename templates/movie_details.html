@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ movie.title }} ({{ movie.year }})</h2>
+    <p><strong>Genre:</strong> {{ movie.genre }}</p>
+    <p>{{ movie.description }}</p>
+
+    <hr>
+    <h4>Leave a Review</h4>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        {{ form.content(class="form-control mb-2", rows="3", placeholder="Write your review here...") }}
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+
+    <hr>
+    <h4>Reviews</h4>
+    <form method="get" class="mb-3">
+    <label>Sort reviews:</label>
+    <select name="sort" onchange="this.form.submit()">
+        <option value="newest" {% if sort=='newest' %}selected{% endif %}>Newest first</option>
+        <option value="oldest" {% if sort=='oldest' %}selected{% endif %}>Oldest first</option>
+    </select>
+</form>
+
+{% for review in reviews %}
+<div class="review">
+    <strong>{{ review.user.username }}</strong>: {{ review.content }} ({{ review.timestamp.strftime('%Y-%m-%d %H:%M') }})
+    {% if current_user.id == review.user_id or current_user.role in ['manager', 'admin'] %}
+    <a href="{{ url_for('edit_review', review_id=review.id) }}" class="btn btn-warning btn-sm">Edit</a>
+    <form method="POST" action="{{ url_for('delete_review', review_id=review.id) }}" style="display:inline;">
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+    </form>
+    {% endif %}
+</div>
+{% endfor %}
+</div>
+<a href="{{ url_for('index') }}" class="btn btn-primary">Back</a>
+{% endblock %}
+
+</body>
+</html>
