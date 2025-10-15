@@ -13,6 +13,10 @@
         {{ form.content.label(class="form-label") }}
         {{ form.content(class="form-control") }}
     </div>
+    <div class="mb-3">
+        {{ form.rating.label(class="form-label") }}
+        {{ form.rating(class="form-control", min=1, max=5) }}
+    </div>
     {{ form.submit(class="btn btn-primary") }}
 </form>
 <a href="{{ url_for('movie_details', movie_id=review.movie_id) }}" class="btn btn-primary mt-3">Back to Movie Details</a>

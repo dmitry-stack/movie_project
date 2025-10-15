@@ -1,37 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    {% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
-    <h2>Add a new movie</h2>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            {{ form.title.label(class="form-label") }}
-            {{ form.title(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            {{ form.genre.label(class="form-label") }}
-            {{ form.genre(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            {{ form.year.label(class="form-label") }}
-            {{ form.year(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            {{ form.description.label(class="form-label") }}
-            {{ form.description(class="form-control") }}
-        </div>
-        {{ form.submit(class="btn btn-primary") }}
-    </form>
+<h2>Добавить фильм через API</h2>
+
+<div>
+  <input type="text" id="searchQuery" placeholder="Введите название фильма">
+  <button onclick="searchMovies()">Поиск</button>
 </div>
-<a href="{{ url_for('index') }}" class="btn btn-primary">Back</a>
+
+<div id="results" style="margin-top:20px;"></div>
+
+<script>
+async function searchMovies() {
+  const query = document.getElementById('searchQuery').value.trim();
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = '';
+
+  if (!query) {
+    resultsDiv.innerHTML = '<p>Введите название фильма.</p>';
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/search_movies?q=${encodeURIComponent(query)}`);
+    const data = await response.json();
+
+    if (data.error) {
+      resultsDiv.innerHTML = `<p>${data.error}</p>`;
+      return;
+    }
+
+    data.forEach(movie => {
+      const card = document.createElement('div');
+      card.style.border = '1px solid #ccc';
+      card.style.margin = '10px';
+      card.style.padding = '10px';
+      card.style.display = 'flex';
+      card.style.alignItems = 'center';
+      card.style.gap = '15px';
+      card.innerHTML = `
+        <img src="${movie.poster !== 'N/A' ? movie.poster : '/static/no-poster.png'}" 
+             alt="poster" width="100">
+        <div>
+          <h4>${movie.title} (${movie.year})</h4>
+          <button onclick="addMovie('${movie.imdb_id}')">Добавить</button>
+        </div>
+      `;
+      resultsDiv.appendChild(card);
+    });
+  } catch (err) {
+    resultsDiv.innerHTML = '<p>Ошибка при запросе к серверу.</p>';
+  }
+}
+
+async function addMovie(imdb_id) {
+  const response = await fetch('/api/add_movie', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({imdb_id})
+  });
+  const data = await response.json();
+
+  if (data.success) {
+    alert(`Фильм "${data.title}" добавлен!`);
+  } else {
+    alert(data.error || 'Ошибка при добавлении фильма.');
+  }
+}
+</script>
+<a href="{{ url_for(current_user.role+'_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
 {% endblock %}
-</body>
-</html>

@@ -23,6 +23,7 @@ class MovieForm(FlaskForm):
 
 class ReviewForm(FlaskForm):
     content = TextAreaField('Review', validators=[DataRequired(), Length(max=1000)])
-    #rating = IntegerField('Rating', validators=[DataRequired(), NumberRange(min=1, max=10)])
+    rating = IntegerField('Rating', validators=[DataRequired(), NumberRange(min=1, max=5)])
     submit = SubmitField('Submit Review')
+  
 

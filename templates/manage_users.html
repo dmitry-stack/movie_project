@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% extends "base.html" %}
+{% block content %}
+<h2>Управление пользователями</h2>
+
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Role</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for user in users %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ user.role }}</td>
+      <td>
+        {% if user.is_banned %}
+          <span class="text-danger">Забанен</span>
+        {% else %}
+          <span class="text-success">Активен</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if user.is_banned %}
+          <a href="{{ url_for('unban_user', user_id=user.id) }}" class="btn btn-success btn-sm">Разбанить</a>
+        {% else %}
+          <a href="{{ url_for('ban_user', user_id=user.id) }}" class="btn btn-danger btn-sm">Забанить</a>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<a href="{{ url_for(current_user.role+'_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+{% endblock %}
+
+</body>
+</html>

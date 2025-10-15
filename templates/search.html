@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% extends "base.html" %}
+{% block content %}
+<h2>Results: "{{ query }}"</h2>
+<a href="{{ url_for(current_user.role+'_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+<button class="btn btn-secondary mt-3" onclick="goBack()">Back</button>
+{% if movies %}
+<div class="row">
+  {% for movie in movies %}
+  <div class="col-md-4 mb-3">
+    <div class="card">
+      <img src="{{ movie.poster }}" class="card-img-top" alt="{{ movie.title }}">
+      <div class="card-body">
+        <h5 class="card-title">{{ movie.title }}</h5>
+        <p class="card-text">Year: {{ movie.year }}</p>
+        <p>Rating: {{ '%.1f' % movie.average_rating if movie.average_rating is not none else 'N/A' }}</p>
+
+        <a href="{{ url_for('movie_details', movie_id=movie.id) }}" class="btn btn-primary">Details</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p>Nothing was found 😢</p>
+{% endif %}
+{% endblock %}
+
+</body>
+</html>
+</body>
+</html>
