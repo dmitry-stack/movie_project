@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+
+    {% extends "base.html" %}
+{% block content %}
+<h1> Welcome, {{ current_user.username }}!</h1>
+
+<a href="{{ url_for('main.movies') }}" class="btn btn-primary">View Movies</a>
+
+{% endblock %}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    {% extends "base.html" %}
+    {% block content %}
+    <div class="container mt-4">
+        <h2>Users Manager</h2>
+
+        <!-- Alert container for messages -->
+        <div id="alertContainer"></div>
+
+        <table class="table table-bordered table-hover mt-4">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+                <tr id="user-row-{{ user.id }}">
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>
+                        <span id="role-{{ user.id }}" class="badge bg-info">{{ user.role }}</span>
+                    </td>
+                    <td>
+                        <span id="status-{{ user.id }}" 
+                              class="badge {% if user.is_banned %}bg-danger{% else %}bg-success{% endif %}">
+                            {% if user.is_banned %}Banned{% else %}Active{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.role != 'admin' %}
+                            <!-- Ban/Unban Button -->
+                            <button onclick="toggleUserBan({{ user.id }}, {% if user.is_banned %}false{% else %}true{% endif %})"
+                                    id="btn-{{ user.id }}"
+                                    class="btn btn-sm {% if user.is_banned %}btn-success{% else %}btn-danger{% endif %}">
+                                {% if user.is_banned %}Unban{% else %}Ban{% endif %}
+                            </button>
+                            
+                            <!-- Role Assignment Dropdown -->
+                            <select id="role-select-{{ user.id }}" 
+                                    class="form-select form-select-sm d-inline-block w-auto ms-2"
+                                    onchange="changeUserRole({{ user.id }}, this.value)">
+                                <option value="">Change Role</option>
+                                <option value="user" {% if user.role == 'user' %}disabled{% endif %}>User</option>
+                                <option value="moderator" {% if user.role == 'moderator' %}disabled{% endif %}>Moderator</option>
+                                <option value="admin" {% if user.role == 'admin' %}disabled{% endif %}>Admin</option>
+                            </select>
+                        {% else %}
+                            <button class="btn btn-secondary btn-sm" disabled>Admin</button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="{{ url_for('main.' ~ current_user.role ~ '_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    async function toggleUserBan(userId, ban) {
+        const button = document.getElementById(`btn-${userId}`);
+        const statusBadge = document.getElementById(`status-${userId}`);
+        
+        button.disabled = true;
+        const action = ban ? 'ban' : 'unban';
+
+        try {
+            const response = await fetch(`/admin/${action}_user/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content
+                }
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Update UI
+                statusBadge.className = `badge ${ban ? 'bg-danger' : 'bg-success'}`;
+                statusBadge.textContent = ban ? 'Banned' : 'Active';
+                button.className = `btn btn-sm ${ban ? 'btn-success' : 'btn-danger'}`;
+                button.textContent = ban ? 'Unban' : 'Ban';
+                button.onclick = function() { toggleUserBan(userId, !ban); };
+
+                showAlert('success', data.message);
+            } else {
+                throw new Error(data.error || 'Operation failed');
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert('danger', error.message || 'Error updating user status');
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function changeUserRole(userId, newRole) {
+        if (!newRole) return;
+        
+        const roleSelect = document.getElementById(`role-select-${userId}`);
+        const roleBadge = document.getElementById(`role-${userId}`);
+        const originalRole = roleBadge.textContent.toLowerCase();
+        
+        if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+            roleSelect.value = '';
+            return;
+        }
+        
+        roleSelect.disabled = true;
+
+        try {
+            const response = await fetch(`/admin/change_role/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({ role: newRole })
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Update role badge
+                roleBadge.textContent = newRole;
+                showAlert('success', data.message);
+                
+                // Reload page if user was changed to/from admin
+                if (newRole === 'admin' || originalRole === 'admin') {
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } else {
+                throw new Error(data.error || 'Operation failed');
+            }
+        } catch (error) {
+            console.error(error);
+            showAlert('danger', error.message || 'Error changing user role');
+        } finally {
+            roleSelect.disabled = false;
+            roleSelect.value = '';
+        }
+    }
+
+    function showAlert(type, message) {
+        const alertContainer = document.getElementById('alertContainer');
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertContainer.innerHTML = ''; // Clear previous alerts
+        alertContainer.appendChild(alert);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+        }, 5000);
+    }
+    </script>
+    {% endblock %}
+</body>
+</html>

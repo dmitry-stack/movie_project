@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<h2>Search Movies</h2>
+
+<div class="input-group mb-3">
+  <input class="form-control mr-sm-2 d-inline-block" type="search" 
+         placeholder="Search" aria-label="Search" 
+         id="searchInput" 
+         style="width:auto; display:inline-block; background-color: #fff; color: #222;">
+  <button class="btn btn-primary" type="button" id="searchBtn" onclick="ajaxSearch()">Search</button>
+</div>
+
+<div id="loading" class="text-center d-none">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<div id="errorMessage" class="alert alert-danger d-none"></div>
+<div id="results"></div>
+
+<script>
+async function ajaxSearch() {
+  const query = document.getElementById('searchInput').value.trim();
+  const resultsDiv = document.getElementById('results');
+  const loadingDiv = document.getElementById('loading');
+  const errorDiv = document.getElementById('errorMessage');
+
+  resultsDiv.innerHTML = '';
+  errorDiv.classList.add('d-none');
+
+  if (!query) {
+    errorDiv.textContent = 'Please enter a movie title.';
+    errorDiv.classList.remove('d-none');
+    return;
+  }
+
+  loadingDiv.classList.remove('d-none');
+
+  try {
+    const response = await fetch(`/api/search_movies?q=${encodeURIComponent(query)}`);
+    const data = await response.json();
+
+    loadingDiv.classList.add('d-none');
+
+    if (data.error) {
+      errorDiv.textContent = data.error;
+      errorDiv.classList.remove('d-none');
+      return;
+    }
+
+    resultsDiv.innerHTML = '';
+    data.forEach(movie => {
+      const card = document.createElement('div');
+      card.className = 'card mb-3';
+      card.innerHTML = `
+        <img src="${movie.poster}" class="card-img-top" alt="${movie.title}">
+        <div class="card-body">
+          <h5 class="card-title">${movie.title}</h5>
+          <p class="card-text">Year: ${movie.year}</p>
+        </div>
+      `;
+      resultsDiv.appendChild(card);
+    });
+
+  } catch (err) {
+    errorDiv.textContent = 'Error searching movies.';
+    errorDiv.classList.remove('d-none');
+    loadingDiv.classList.add('d-none');
+  }
+}
+
+const input = document.getElementById('searchInput');
+if (input) {
+  input.addEventListener('keyup', e => {
+    if (e.key === 'Enter') ajaxSearch();
+  });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% extends "base.html" %}
+    {% block content %}
+    <h2>Edit Review</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.content.label(class="form-label") }}
+        {{ form.content(class="form-control") }}
+    </div>
+    <div class="mb-3">
+        {{ form.rating.label(class="form-label") }}
+        {{ form.rating(class="form-control", min=1, max=5) }}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+<a href="{{ url_for('main.movie_details', movie_id=review.movie_id) }}" class="btn btn-primary mt-3">Back to Movie Details</a>
+{% endblock %}
+</body>
+
+</html>

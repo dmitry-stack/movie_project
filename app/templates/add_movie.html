@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<h2>Add movie</h2>
+
+<div class="search-container">
+  <input type="text" id="searchQuery" placeholder="Enter movie name" onkeyup="debouncedSearch()">
+  <button id="searchBtn" onclick="searchMovies()" class="btn btn-primary">Search</button>
+</div>
+
+<div id="results" class="mt-4"></div>
+
+<!-- Add a loading spinner -->
+<div id="loading" class="text-center d-none">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<!-- Add an error message container -->
+<div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
+
+<script>
+// Get CSRF token from meta tag (Flask-WTF provides this)
+const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
+// Add debouncing for search input
+let searchTimeout;
+let currentSearchController = null;
+
+function debouncedSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(searchMovies, 300);
+}
+
+async function searchMovies() {
+    const query = document.getElementById('searchQuery').value.trim();
+    const resultsDiv = document.getElementById('results');
+    const loadingDiv = document.getElementById('loading');
+    const errorDiv = document.getElementById('errorMessage');
+    const searchBtn = document.getElementById('searchBtn');
+
+    // Clear previous results and errors
+    resultsDiv.innerHTML = '';
+    errorDiv.classList.add('d-none');
+
+    if (!query) {
+        showError('Please enter a movie name');
+        return;
+    }
+
+    // Cancel previous request if it exists
+    if (currentSearchController) {
+        currentSearchController.abort();
+    }
+
+    // Create new AbortController for this request
+    currentSearchController = new AbortController();
+    
+    try {
+        // Show loading state
+        loadingDiv.classList.remove('d-none');
+        searchBtn.disabled = true;
+
+        const response = await fetch(
+            `/api/search_movies?q=${encodeURIComponent(query)}`,
+            { signal: currentSearchController.signal }
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
+
+        if (data.length === 0) {
+            resultsDiv.innerHTML = '<p class="text-muted">No movies found</p>';
+            return;
+        }
+
+        data.forEach(movie => {
+            const card = document.createElement('div');
+            card.className = 'card mb-3';
+            card.innerHTML = `
+                <div class="row g-0">
+                    <div class="col-md-2">
+                        <img src="${movie.poster !== 'N/A' ? movie.poster : '/static/no-poster.png'}" 
+                             class="img-fluid rounded-start" alt="${movie.title} poster">
+                    </div>
+                    <div class="col-md-10">
+                        <div class="card-body">
+                            <h5 class="card-title">${movie.title} (${movie.year})</h5>
+                            <button onclick="addMovie('${movie.imdb_id}')" 
+                                    class="btn btn-primary">Add Movie</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultsDiv.appendChild(card);
+        });
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            // Search was cancelled, do nothing
+            return;
+        }
+        showError('An error occurred while searching. Please try again.');
+        console.error('Search error:', err);
+    } finally {
+        loadingDiv.classList.add('d-none');
+        searchBtn.disabled = false;
+        currentSearchController = null;
+    }
+}
+
+function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('d-none');
+}
+
+async function addMovie(imdb_id) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.classList.add('d-none');
+    
+    try {
+        const response = await fetch('/api/api/add_movie', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ imdb_id })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || `HTTP error ${response.status}`);
+        }
+
+        if (data.success) {
+            // ✅ Show success message
+            const successAlert = document.createElement('div');
+    successAlert.className = 'alert alert-success alert-dismissible fade show mt-3';
+    successAlert.innerHTML = `
+    Movie "<strong>${data.title}</strong>" was added successfully!
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+`;
+
+// Insert after the search container
+document.querySelector('.search-container').insertAdjacentElement('afterend', successAlert);
+
+// Auto-hide after 5 seconds
+setTimeout(() => {
+    // Fade out
+    successAlert.classList.remove('show');
+    successAlert.classList.add('hide');
+    // Remove from DOM after fade
+    setTimeout(() => successAlert.remove(), 500);
+}, 5000);
+            document.querySelector('.search-container').insertAdjacentElement('afterend', successAlert);
+
+            // ✅ Disable the Add button for this movie
+            const addBtn = document.querySelector(`button[onclick="addMovie('${imdb_id}')"]`);
+            if (addBtn) {
+                addBtn.textContent = 'Added';
+                addBtn.classList.remove('btn-primary');
+                addBtn.classList.add('btn-success');
+                addBtn.disabled = true;
+            }
+        } else {
+            showError(data.error || 'Failed to add movie.');
+        }
+    } catch (err) {
+        console.error('Add movie error:', err);
+        showError('An error occurred while adding the movie. Please try again.');
+    }
+}
+
+
+</script>
+<a href="{{ url_for('main.' ~ current_user.role ~ '_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+{% endblock %}

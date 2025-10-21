@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ movie.title }} ({{ movie.year }})</h2>
+    <p><strong>Genre:</strong> {{ movie.genre }}</p>
+    <p>{{ movie.description }}</p>
+    <p><strong>Average Rating:</strong> {{ '%.1f' % avarage_rating }} / 5</p>
+
+    <hr>
+    <h4>Leave a Review</h4>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-2">
+            {{ form.content(class="form-control", rows="3", placeholder="Write your review here...") }}
+        </div>
+        <div class="mb-2">
+            {{ form.rating.label(class="form-label") }}
+            {{ form.rating(class="form-control", min=1, max=5) }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+
+    <hr>
+    <h4>Reviews</h4>
+    <form method="GET" action="{{ url_for('main.movie_details', movie_id=movie.id) }}" class="d-flex gap-3 align-items-center mb-3">
+    <label>Sort reviews:</label>
+    <select name="sort" onchange="this.form.submit()">
+        <div>
+        <option value="newest" {% if sort=='newest' %}selected{% endif %}>Newest first</option>
+        <option value="oldest" {% if sort=='oldest' %}selected{% endif %}>Oldest first</option>
+        </div>
+    </select>
+     <div>
+        <label for="rating_filter">Filter:</label>
+        <select name="rating_filter" id="rating_filter" onchange="this.form.submit()">
+            <option value="all" {% if rating_filter == 'all' %}selected{% endif %}>All reviews</option>
+            <option value="5" {% if rating_filter == '5' %}selected{% endif %}>Only 5 stars</option>
+            <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4 stars & above</option>
+            <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3 stars & above</option>
+            <option value="2" {% if rating_filter == '2' %}selected{% endif %}>2 stars & above</option>
+            <option value="1" {% if rating_filter == '1' %}selected{% endif %}>1 star & above</option>
+        </select>
+    </div>
+</form>
+ 
+
+{% for review in reviews %}
+<div class="review">
+    <strong>{{ review.user.username }}</strong>: {{ review.content }} ({{ review.timestamp.strftime('%Y-%m-%d %H:%M') }})
+    <span> | <strong>Rating:</strong> {{ review.rating }} / 5</span>
+    {% if current_user.id == review.user_id or current_user.role in ['moderator', 'admin'] %}
+    <a href="{{ url_for('main.edit_review', review_id=review.id) }}" class="btn btn-warning btn-sm">Edit</a>
+    <form method="POST" action="{{ url_for('main.delete_review', review_id=review.id) }}" 
+          style="display:inline;"
+          onsubmit="return confirm('Are you sure you want to delete this review?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="submit" value="Delete" class="btn btn-danger btn-sm">
+    </form>
+{% endif %}
+
+</div>
+{% endfor %}
+</div>
+<div class="d-flex justify-content-center gap-5 mt-3">
+    <a href="{{ url_for('main.movies') }}" class="btn btn-primary">Back</a>
+
+    {% if current_user.role in ['admin', 'moderator'] %}
+    <form method="POST" action="{{ url_for('admin.delete_movie', movie_id=movie.id) }}" 
+          onsubmit="return confirm('Are you sure you want to delete this movie?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger">Delete Movie</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+
+</body>
+</html>

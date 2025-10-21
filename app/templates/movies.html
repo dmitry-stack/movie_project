@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Movies</h2>
+    <a href="{{ url_for('main.' ~ current_user.role ~ '_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+  
+    <div class="mb-3">
+    <form method="get" class="d-flex gap-2 align-items-end">
+        <div>
+            <label for="genre">Filter by genre:</label>
+            <select name="genre" class="form-select w-auto">
+                <option value="">All</option>
+                {% for g in genres %}
+                    <option value="{{ g }}" {% if request.args.get('genre') == g %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="sort">Sort by:</label>
+            <select name="sort" class="form-select w-auto">
+                
+                <option value="title_asc" {% if request.args.get('sort') == 'title_asc' %}selected{% endif %}>Title A–Z</option>
+                <option value="title_desc" {% if request.args.get('sort') == 'title_desc' %}selected{% endif %}>Title Z–A</option>
+                <option value="rating_asc" {% if request.args.get('sort') == 'rating_asc' %}selected{% endif %}>Rating Low → High</option>
+                <option value="rating_desc" {% if request.args.get('sort','rating_desc') == 'rating_desc' %}selected{% endif %}>Rating High → Low</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary">Apply</button>
+    </form>
+</div>
+
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Title</th>
+                    <th>Genre</th>
+                    <th>Year</th>
+                    <th>Description</th>
+                    <th>Rating</th>
+                    <th>Poster</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for movie in movies %}
+                <tr>
+                    <td><a href="{{ url_for('main.movie_details', movie_id=movie.id) }}">{{ movie.title }}</a></td>
+                    <td>{{ movie.genre }}</td>
+                    <td>{{ movie.year }}</td>
+                    <td class="text-truncate" style="max-width: 300px;">{{ movie.description }}</td>
+                    <td>{{ '%.1f' | format(movie.computed_rating) }} / 5</td>
+                    <td><img src="{{ movie.poster }}" alt="Poster for {{ movie.title }}" class="img-fluid" style="max-width: 100px;"></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+   
+</div>
+{% endblock %}

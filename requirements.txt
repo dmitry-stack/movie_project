@@ -1,0 +1,9 @@
+Flask
+Flask-Login
+Flask-WTF
+Flask-SQLAlchemy
+Flask-Migrate
+pytest
+Werkzeug
+python-dotenv
+requests
