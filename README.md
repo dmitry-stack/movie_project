@@ -3,13 +3,67 @@
 ## 1. Project Overview
 The Movie Project is a web application built with **Flask** that allows users to manage, search, and review movies. The application supports multiple user roles: `user`, `moderator`, and `admin`, each with different permissions.
 
-**Key features:**
-- User registration, login, and password reset
-- Movie management via external API (OMDb)
-- Movie search and filtering
-- Review creation, editing, and deletion
-- Role-based access control
-- REST API endpoints for integration
+## Idea
+- **User** – regular user who can search movies, leave reviews, request password reset.
+- **Moderator** – can do everything a User can, plus add/delete movies, moderate reviews.
+- **Admin** – full control: add/delete movies, manage users (ban/uban, assigning roles), moderate reviews.
+  
+By default, a new registered user is **User**.
+There are some pre-added users with the following credentials: 
+| email    | password |
+| -------- | ------- |
+| adminemail@gmail.com  | admin    |
+| moderatoremail@gmail.com | moderator    |
+| useremail@gmail.com    | user   |
+
+Login:
+
+<img width="1900" height="947" alt="image" src="https://github.com/user-attachments/assets/18aaaa7a-797f-4f41-9102-d361aef6c153" />
+
+Movies with sorting and genre filter:
+
+<img width="1894" height="950" alt="image" src="https://github.com/user-attachments/assets/b331431f-4720-4283-beed-86e9f6eb97e9" />
+
+Reviews with sorting and rating filter:
+
+<img width="1907" height="923" alt="image" src="https://github.com/user-attachments/assets/bcc2ea57-0a5f-424a-a495-efe820a764aa" />
+
+
+**DataFlow**
+
+```mermaid
+flowchart TD
+    %% External Entities
+    User -->|Login/Logout| Auth[Authentication Process]
+    Moderator -->|Login/Logout| Auth
+    Admin -->|Login/Logout| Auth
+
+    User -->|Search Movie| Search[Search Movie Process]
+    Moderator -->|Search Movie| Search
+    Admin -->|Search Movie| Search
+
+    Moderator -->|Add Movie| AddMovie[Add Movie Process]
+    Admin -->|Add Movie| AddMovie
+
+    User -->|Review Movie| Review[Review Movie Process]
+    Moderator -->|Review Movie| Review
+    Admin -->|Review Movie| Review
+
+    User -->|Password Reset| PasswordReset[Password Reset Process]
+
+    %% Data Stores
+    Auth -->|Validate / Update| UserTable[(User Table)]
+    Search -->|Query / Save| MovieTable[(Movie Table)]
+    AddMovie -->|Insert| MovieTable
+    Review -->|Read / Write| ReviewTable[(Review Table)]
+    PasswordReset -->|Generate / Validate| PasswordResetTable[(PasswordResetToken Table)]
+
+    %% External API
+    Search -->|API Request| OMDB[External Movie API]
+    OMDB -->|API Response| Search
+```
+
+
 
 ## 2. Technology Stack
 - **Backend:** Python 3, Flask, SQLAlchemy
