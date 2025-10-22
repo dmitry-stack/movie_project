@@ -16,6 +16,8 @@ There are some pre-added users with the following credentials:
 | moderatoremail@gmail.com | moderator    |
 | useremail@gmail.com    | 123456   |
 
+You can also reset the password, after entering your email address you will recieve a link printed in your console.
+
 Login:
 
 <img width="1900" height="947" alt="image" src="https://github.com/user-attachments/assets/18aaaa7a-797f-4f41-9102-d361aef6c153" />
