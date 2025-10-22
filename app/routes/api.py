@@ -5,6 +5,8 @@ import requests
 from ..models import Movie
 from ..extensions import db
 from .main import main
+from dotenv import load_dotenv
+import os
 
 api = Blueprint('api', __name__)
 
@@ -16,10 +18,9 @@ def api_search_movies():
     query = request.args.get('q', '').strip()
     if not query:
         return jsonify({'error': 'Empty query'}), 400
-
-    api_key = "9eb2235f"
+    load_dotenv()
+    api_key = os.getenv("OMDB_API_KEY")
     url = f"https://www.omdbapi.com/?apikey={api_key}&s={query}"
-    
     try:
         response = requests.get(url, timeout=5)
         response.raise_for_status()
@@ -61,7 +62,8 @@ def api_search_movies():
 def api_add_movie():
     data = request.get_json()
     imdb_id = data.get('imdb_id')
-    api_key = "9eb2235f"
+    load_dotenv()
+    api_key = os.getenv("OMDB_API_KEY")
 
     if not imdb_id:
         return jsonify({'error': 'imdb_id is not specified'}), 400

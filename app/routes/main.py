@@ -7,6 +7,8 @@ from ..models import PasswordResetToken, User, Movie, Review
 from ..forms import RegisterForm, LoginForm, MovieForm, ReviewForm, RequestResetForm, ResetPasswordForm
 from ..extensions import db
 import datetime
+from dotenv import load_dotenv
+import os
 
 main = Blueprint('main', __name__)
 
@@ -138,7 +140,8 @@ def add_movie():
     if form.validate_on_submit():
         title = form.title.data
         
-        api_key = "9eb2235f"
+        load_dotenv()
+        api_key = os.getenv("OMDB_API_KEY")
         try:
             response = requests.get(
                 f"http://www.omdbapi.com/?t={title}&apikey={api_key}",

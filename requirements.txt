@@ -7,3 +7,6 @@ pytest
 Werkzeug
 python-dotenv
 requests
+pytest
+pytest-mock
+email-validator

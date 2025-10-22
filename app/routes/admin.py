@@ -84,12 +84,6 @@ def moderator_dashboard():
     return render_template('manager.html')
 
 
-# @admin.route('/user_dashboard')
-# @login_required
-# @role_required('user', 'manager', 'admin')
-# def user_dashboard():
-#     return render_template('user.html')
-
 @admin.route('/movie/<int:movie_id>/delete', methods=['POST'])
 @login_required
 def delete_movie(movie_id):

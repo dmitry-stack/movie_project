@@ -10,26 +10,33 @@
 
 <div id="results" class="mt-4"></div>
 
-<!-- Add a loading spinner -->
 <div id="loading" class="text-center d-none">
   <div class="spinner-border text-primary" role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
 </div>
 
-<!-- Add an error message container -->
 <div id="errorMessage" class="alert alert-danger mt-3 d-none"></div>
 
 <script>
-// Get CSRF token from meta tag (Flask-WTF provides this)
+
 const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content;
-// Add debouncing for search input
+
 let searchTimeout;
 let currentSearchController = null;
 
 function debouncedSearch() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(searchMovies, 300);
+}
+
+function showError(msg) {
+  if (errorBox) {
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+  } else {
+     alert(msg);
+  }
 }
 
 async function searchMovies() {
@@ -39,7 +46,6 @@ async function searchMovies() {
     const errorDiv = document.getElementById('errorMessage');
     const searchBtn = document.getElementById('searchBtn');
 
-    // Clear previous results and errors
     resultsDiv.innerHTML = '';
     errorDiv.classList.add('d-none');
 
@@ -48,16 +54,15 @@ async function searchMovies() {
         return;
     }
 
-    // Cancel previous request if it exists
+
     if (currentSearchController) {
         currentSearchController.abort();
     }
 
-    // Create new AbortController for this request
     currentSearchController = new AbortController();
     
     try {
-        // Show loading state
+        
         loadingDiv.classList.remove('d-none');
         searchBtn.disabled = true;
 
@@ -104,7 +109,6 @@ async function searchMovies() {
         });
     } catch (err) {
         if (err.name === 'AbortError') {
-            // Search was cancelled, do nothing
             return;
         }
         showError('An error occurred while searching. Please try again.');
@@ -127,7 +131,7 @@ async function addMovie(imdb_id) {
     errorDiv.classList.add('d-none');
     
     try {
-        const response = await fetch('/api/api/add_movie', {
+        const response = await fetch('/api/add_movie', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -143,7 +147,7 @@ async function addMovie(imdb_id) {
         }
 
         if (data.success) {
-            // ✅ Show success message
+  
             const successAlert = document.createElement('div');
     successAlert.className = 'alert alert-success alert-dismissible fade show mt-3';
     successAlert.innerHTML = `
@@ -151,20 +155,16 @@ async function addMovie(imdb_id) {
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 `;
 
-// Insert after the search container
 document.querySelector('.search-container').insertAdjacentElement('afterend', successAlert);
 
-// Auto-hide after 5 seconds
 setTimeout(() => {
-    // Fade out
+  
     successAlert.classList.remove('show');
     successAlert.classList.add('hide');
-    // Remove from DOM after fade
     setTimeout(() => successAlert.remove(), 500);
 }, 5000);
             document.querySelector('.search-container').insertAdjacentElement('afterend', successAlert);
 
-            // ✅ Disable the Add button for this movie
             const addBtn = document.querySelector(`button[onclick="addMovie('${imdb_id}')"]`);
             if (addBtn) {
                 addBtn.textContent = 'Added';
@@ -177,7 +177,7 @@ setTimeout(() => {
         }
     } catch (err) {
         console.error('Add movie error:', err);
-        showError('An error occurred while adding the movie. Please try again.');
+        showError(err.message || 'An error occurred while adding the movie. Please try again.');
     }
 }
 

@@ -303,20 +303,20 @@ class TestSearchMovies:
 class TestAddMovie:
     """Tests for the /api/add_movie endpoint."""
     
-    # def test_add_movie_requires_login(self, client):
-    #     """Test that add movie endpoint requires authentication."""
-    #     resp = client.post('/api/add_movie', 
-    #                       json={'imdb_id': 'tt0372784'},
-    #                       content_type='application/json')
-    #     assert resp.status_code == 302  # Redirect to login
+    def test_add_movie_requires_login(self, client):
+        """Test that add movie endpoint requires authentication."""
+        resp = client.post('/api/add_movie', 
+                          json={'imdb_id': 'tt0372784'},
+                          content_type='application/json')
+        assert resp.status_code == 302  # Redirect to login
     
-    # def test_add_movie_requires_moderator_or_admin(self, client, app, regular_user):
-    #     """Test that regular users cannot add movies."""
-    #     login_user(client, 'user@test.com', 'userpass')
-    #     resp = client.post('/api/add_movie',
-    #                       json={'imdb_id': 'tt0372784'},
-    #                       content_type='application/json')
-    #     assert resp.status_code in [302, 403]
+    def test_add_movie_requires_moderator_or_admin(self, client, app, regular_user):
+        """Test that regular users cannot add movies."""
+        login_user(client, 'user@test.com', 'userpass')
+        resp = client.post('/api/add_movie',
+                          json={'imdb_id': 'tt0372784'},
+                          content_type='application/json')
+        assert resp.status_code in [302, 403]
     
     def test_add_movie_missing_imdb_id(self, client, app, moderator_user):
         """Test adding movie without imdb_id returns error."""
