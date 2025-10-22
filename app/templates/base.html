@@ -116,9 +116,7 @@
           return;
         }
 
-        // Optionally redirect or display search results
         console.log("Search results:", data);
-        // You can redirect to a search results page:
         window.location.href = `/search_results?q=${encodeURIComponent(query)}`;
       } catch (error) {
         console.error("Error:", error);

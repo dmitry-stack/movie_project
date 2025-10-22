@@ -12,9 +12,8 @@
     <div class="container mt-4">
         <h2>Users Manager</h2>
 
-        <!-- Alert container for messages -->
         <div id="alertContainer"></div>
-
+<div class="table-responsive">
         <table class="table table-bordered table-hover mt-4">
             <thead class="table-dark">
                 <tr>
@@ -41,14 +40,13 @@
                     </td>
                     <td>
                         {% if user.role != 'admin' %}
-                            <!-- Ban/Unban Button -->
+                            
                             <button onclick="toggleUserBan({{ user.id }}, {% if user.is_banned %}false{% else %}true{% endif %})"
                                     id="btn-{{ user.id }}"
                                     class="btn btn-sm {% if user.is_banned %}btn-success{% else %}btn-danger{% endif %}">
                                 {% if user.is_banned %}Unban{% else %}Ban{% endif %}
                             </button>
                             
-                            <!-- Role Assignment Dropdown -->
                             <select id="role-select-{{ user.id }}" 
                                     class="form-select form-select-sm d-inline-block w-auto ms-2"
                                     onchange="changeUserRole({{ user.id }}, this.value)">
@@ -65,7 +63,7 @@
             {% endfor %}
             </tbody>
         </table>
-
+</div>
         <a href="{{ url_for('main.' ~ current_user.role ~ '_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
     </div>
 
@@ -91,7 +89,6 @@
             const data = await response.json();
 
             if (data.success) {
-                // Update UI
                 statusBadge.className = `badge ${ban ? 'bg-danger' : 'bg-success'}`;
                 statusBadge.textContent = ban ? 'Banned' : 'Active';
                 button.className = `btn btn-sm ${ban ? 'btn-success' : 'btn-danger'}`;
@@ -138,11 +135,10 @@
             const data = await response.json();
 
             if (data.success) {
-                // Update role badge
                 roleBadge.textContent = newRole;
                 showAlert('success', data.message);
                 
-                // Reload page if user was changed to/from admin
+
                 if (newRole === 'admin' || originalRole === 'admin') {
                     setTimeout(() => location.reload(), 1500);
                 }
@@ -166,10 +162,8 @@
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
-        alertContainer.innerHTML = ''; // Clear previous alerts
+        alertContainer.innerHTML = ''; 
         alertContainer.appendChild(alert);
-        
-        // Auto-dismiss after 5 seconds
         setTimeout(() => {
             alert.classList.remove('show');
             setTimeout(() => alert.remove(), 150);

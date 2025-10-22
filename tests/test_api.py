@@ -5,17 +5,13 @@ from werkzeug.security import generate_password_hash
 from app.models import User, Movie
 
 
-# Fixtures
-
 @pytest.fixture
 def client(app):
-    """Create a test client for the app."""
     return app.test_client()
 
 
 @pytest.fixture
 def admin_user(app):
-    """Create an admin user."""
     from app.extensions import db
     with app.app_context():
         user = User.query.filter_by(email='admin@test.com').first()
@@ -34,7 +30,6 @@ def admin_user(app):
 
 @pytest.fixture
 def moderator_user(app):
-    """Create a moderator user."""
     from app.extensions import db
     with app.app_context():
         user = User.query.filter_by(email='moderator@test.com').first()
@@ -53,7 +48,6 @@ def moderator_user(app):
 
 @pytest.fixture
 def regular_user(app):
-    """Create a regular user."""
     from app.extensions import db
     with app.app_context():
         user = User.query.filter_by(email='user@test.com').first()
@@ -71,32 +65,18 @@ def regular_user(app):
 
 
 def login_user(client, email, password):
-    """Helper function to log in a user."""
     return client.post('/login', data={
         'email': email,
         'password': password
     }, follow_redirects=True)
 
 
-# Test Cases
 
 class TestSearchMovies:
-    """Tests for the /api/search_movies endpoint."""
+
     
-    # def test_search_movies_requires_login(self, client):
-    #     """Test that search endpoint requires authentication."""
-    #     resp = client.get('/api/search_movies?q=Batman')
-    #     assert resp.status_code == 302  # Redirect to login
-    
-    # def test_search_movies_requires_moderator_or_admin(self, client, app, regular_user):
-    #     """Test that regular users cannot search movies."""
-    #     login_user(client, 'user@test.com', 'userpass')
-    #     resp = client.get('/api/search_movies?q=Batman')
-    #     # Should be forbidden or redirected
-    #     assert resp.status_code in [302, 403]
     
     def test_search_movies_empty_query(self, client, app, moderator_user):
-        """Test search with empty query returns error."""
         login_user(client, 'moderator@test.com', 'modpass')
         resp = client.get('/api/search_movies?q=')
         assert resp.status_code == 400
@@ -105,7 +85,7 @@ class TestSearchMovies:
         assert 'Empty query' in data['error']
     
     def test_search_movies_no_query_param(self, client, app, moderator_user):
-        """Test search without query parameter returns error."""
+        
         login_user(client, 'moderator@test.com', 'modpass')
         resp = client.get('/api/search_movies')
         assert resp.status_code == 400
@@ -114,10 +94,9 @@ class TestSearchMovies:
     
     @patch('requests.get')
     def test_search_movies_successful(self, mock_get, client, app, moderator_user):
-        """Test successful movie search."""
-        login_user(client, 'moderator@test.com', 'modpass')
         
-        # Mock OMDb API response
+        login_user(client, 'moderator@test.com', 'modpass')
+
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -151,7 +130,7 @@ class TestSearchMovies:
     
     @patch('requests.get')
     def test_search_movies_admin_access(self, mock_get, client, app, admin_user):
-        """Test that admins can also search movies."""
+       
         login_user(client, 'admin@test.com', 'adminpass')
         
         mock_response = Mock()
@@ -173,10 +152,9 @@ class TestSearchMovies:
     
     @patch('requests.get')
     def test_search_movies_too_many_results_fallback(self, mock_get, client, app, admin_user):
-        """Test fallback when too many results are returned."""
-        login_user(client, 'admin@test.com', 'adminpass')
         
-        # Mock first response with "Too many results" error
+        login_user(client, 'admin@test.com', 'adminpass')
+
         mock_response1 = Mock()
         mock_response1.status_code = 200
         mock_response1.json.return_value = {
@@ -184,8 +162,7 @@ class TestSearchMovies:
             "Error": "Too many results."
         }
         mock_response1.raise_for_status = Mock()
-        
-        # Mock second response with exact title match
+
         mock_response2 = Mock()
         mock_response2.status_code = 200
         mock_response2.json.return_value = {
@@ -208,10 +185,8 @@ class TestSearchMovies:
     
     @patch('requests.get')
     def test_search_movies_too_many_results_no_fallback(self, mock_get, client, app, admin_user):
-        """Test error when too many results and fallback also fails."""
         login_user(client, 'admin@test.com', 'adminpass')
-        
-        # Mock both responses with errors
+
         mock_response1 = Mock()
         mock_response1.status_code = 200
         mock_response1.json.return_value = {
@@ -235,26 +210,12 @@ class TestSearchMovies:
         assert 'error' in data
         assert 'Too many matches' in data['error']
     
-    # @patch('requests.get')
-    # def test_search_movies_api_connection_error(self, mock_get, client, app, moderator_user):
-    #     """Test handling of API connection errors."""
-    #     login_user(client, 'moderator@test.com', 'modpass')
-        
-    #     # Mock connection error
-    #     mock_get.side_effect = Exception("Connection timeout")
-        
-    #     resp = client.get('/api/search_movies?q=Batman')
-    #     assert resp.status_code == 500
-    #     data = json.loads(resp.data)
-    #     assert 'error' in data
-    #     assert 'OMDb API error' in data['error']
-    
+
     @patch('requests.get')
     def test_search_movies_limits_to_5_results(self, mock_get, client, app, admin_user):
-        """Test that search results are limited to 5 movies."""
-        login_user(client, 'admin@test.com', 'adminpass')
         
-        # Mock response with 10 movies
+        login_user(client, 'admin@test.com', 'adminpass')
+
         movies = [
             {
                 "Title": f"Movie {i}",
@@ -281,7 +242,7 @@ class TestSearchMovies:
     
     @patch('requests.get')
     def test_search_movies_no_results(self, mock_get, client, app, moderator_user):
-        """Test search with no results."""
+        
         login_user(client, 'moderator@test.com', 'modpass')
         
         mock_response = Mock()
@@ -301,17 +262,17 @@ class TestSearchMovies:
 
 
 class TestAddMovie:
-    """Tests for the /api/add_movie endpoint."""
+    
     
     def test_add_movie_requires_login(self, client):
-        """Test that add movie endpoint requires authentication."""
+        
         resp = client.post('/api/add_movie', 
                           json={'imdb_id': 'tt0372784'},
                           content_type='application/json')
-        assert resp.status_code == 302  # Redirect to login
+        assert resp.status_code == 302  
     
     def test_add_movie_requires_moderator_or_admin(self, client, app, regular_user):
-        """Test that regular users cannot add movies."""
+        
         login_user(client, 'user@test.com', 'userpass')
         resp = client.post('/api/add_movie',
                           json={'imdb_id': 'tt0372784'},
@@ -319,7 +280,7 @@ class TestAddMovie:
         assert resp.status_code in [302, 403]
     
     def test_add_movie_missing_imdb_id(self, client, app, moderator_user):
-        """Test adding movie without imdb_id returns error."""
+       
         login_user(client, 'moderator@test.com', 'modpass')
         resp = client.post('/api/add_movie',
                           json={},
@@ -330,7 +291,7 @@ class TestAddMovie:
         assert 'imdb_id is not specified' in data['error']
     
     def test_add_movie_null_imdb_id(self, client, app, moderator_user):
-        """Test adding movie with null imdb_id returns error."""
+       
         login_user(client, 'moderator@test.com', 'modpass')
         resp = client.post('/api/add_movie',
                           json={'imdb_id': None},
@@ -341,11 +302,10 @@ class TestAddMovie:
     
     @patch('requests.get')
     def test_add_movie_successful(self, mock_get, client, app, moderator_user):
-        """Test successfully adding a movie."""
+        
         from app.extensions import db
         login_user(client, 'moderator@test.com', 'modpass')
-        
-        # Mock OMDb API response
+
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -369,8 +329,7 @@ class TestAddMovie:
         data = json.loads(resp.data)
         assert data['success'] is True
         assert data['title'] == 'Batman Begins'
-        
-        # Verify movie was added to database
+
         with app.app_context():
             movie = Movie.query.filter_by(title='Batman Begins').first()
             assert movie is not None
@@ -379,7 +338,7 @@ class TestAddMovie:
     
     @patch('requests.get')
     def test_add_movie_admin_access(self, mock_get, client, app, admin_user):
-        """Test that admins can also add movies."""
+        
         from app.extensions import db
         login_user(client, 'admin@test.com', 'adminpass')
         
@@ -408,10 +367,9 @@ class TestAddMovie:
     
     @patch('requests.get')
     def test_add_movie_not_found(self, mock_get, client, app, admin_user):
-        """Test adding movie with invalid IMDb ID."""
-        login_user(client, 'admin@test.com', 'adminpass')
         
-        # Mock OMDb API response for movie not found
+        login_user(client, 'admin@test.com', 'adminpass')
+
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -432,10 +390,9 @@ class TestAddMovie:
     
     @patch('requests.get')
     def test_add_movie_not_a_movie_type(self, mock_get, client, app, moderator_user):
-        """Test adding item that is not a movie (e.g., TV series)."""
+       
         login_user(client, 'moderator@test.com', 'modpass')
-        
-        # Mock OMDb API response for TV series
+
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -460,11 +417,10 @@ class TestAddMovie:
     
     @patch('requests.get')
     def test_add_movie_already_exists(self, mock_get, client, app, admin_user):
-        """Test adding movie that already exists in database."""
+       
         from app.extensions import db
         login_user(client, 'admin@test.com', 'adminpass')
-        
-        # Add movie to database first
+
         with app.app_context():
             existing_movie = Movie(
                 title='The Dark Knight',
@@ -475,8 +431,7 @@ class TestAddMovie:
             )
             db.session.add(existing_movie)
             db.session.commit()
-        
-        # Mock OMDb API response
+
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -501,30 +456,13 @@ class TestAddMovie:
         assert 'error' in data
         assert 'already in the database' in data['error']
     
-    # @patch('requests.get')
-    # def test_add_movie_api_connection_error(self, mock_get, client, app, moderator_user):
-    #     """Test handling of API connection errors."""
-    #     login_user(client, 'moderator@test.com', 'modpass')
-        
-    #     # Mock connection error
-    #     mock_get.side_effect = Exception("Connection timeout")
-        
-    #     resp = client.post('/api/add_movie',
-    #                       json={'imdb_id': 'tt0372784'},
-    #                       content_type='application/json')
-        
-    #     assert resp.status_code == 500
-    #     data = json.loads(resp.data)
-    #     assert 'error' in data
-    #     assert 'Error occured connecting to OMDb API' in data['error']
     
     @patch('requests.get')
     def test_add_movie_handles_missing_fields(self, mock_get, client, app, admin_user):
-        """Test adding movie with missing optional fields."""
+        
         from app.extensions import db
         login_user(client, 'admin@test.com', 'adminpass')
-        
-        # Mock OMDb API response with minimal data
+
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -532,7 +470,7 @@ class TestAddMovie:
             "Type": "movie",
             "Title": "Unknown Movie",
             "imdbID": "tt1234567"
-            # Missing: Genre, Year, Plot, Poster
+          
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
@@ -544,8 +482,7 @@ class TestAddMovie:
         assert resp.status_code == 200
         data = json.loads(resp.data)
         assert data['success'] is True
-        
-        # Verify defaults were used
+
         with app.app_context():
             movie = Movie.query.filter_by(title='Unknown Movie').first()
             assert movie is not None
@@ -555,15 +492,14 @@ class TestAddMovie:
 
 
 class TestAPIIntegration:
-    """Integration tests for API endpoints."""
+   
     
     @patch('requests.get')
     def test_search_then_add_movie_workflow(self, mock_get, client, app, moderator_user):
-        """Test complete workflow: search for movie then add it."""
+        
         from app.extensions import db
         login_user(client, 'moderator@test.com', 'modpass')
-        
-        # Mock search response
+
         search_response = Mock()
         search_response.status_code = 200
         search_response.json.return_value = {
@@ -578,8 +514,7 @@ class TestAPIIntegration:
             ]
         }
         search_response.raise_for_status = Mock()
-        
-        # Mock add movie response
+
         add_response = Mock()
         add_response.status_code = 200
         add_response.json.return_value = {
@@ -595,15 +530,13 @@ class TestAPIIntegration:
         add_response.raise_for_status = Mock()
         
         mock_get.side_effect = [search_response, add_response]
-        
-        # First search for the movie
+
         search_resp = client.get('/api/search_movies?q=Interstellar')
         assert search_resp.status_code == 200
         search_data = json.loads(search_resp.data)
         assert len(search_data) > 0
         imdb_id = search_data[0]['imdb_id']
-        
-        # Then add it
+
         add_resp = client.post('/api/add_movie',
                                json={'imdb_id': imdb_id},
                                content_type='application/json')
@@ -614,11 +547,10 @@ class TestAPIIntegration:
     
     @patch('requests.get')
     def test_cannot_add_same_movie_twice(self, mock_get, client, app, admin_user):
-        """Test that adding the same movie twice returns error."""
+        
         from app.extensions import db
         login_user(client, 'admin@test.com', 'adminpass')
-        
-        # Mock OMDb response
+
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
@@ -633,14 +565,12 @@ class TestAPIIntegration:
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
-        # Add movie first time
+
         resp1 = client.post('/api/add_movie',
                            json={'imdb_id': 'tt0133093'},
                            content_type='application/json')
         assert resp1.status_code == 200
-        
-        # Try to add same movie again
+
         resp2 = client.post('/api/add_movie',
                            json={'imdb_id': 'tt0133093'},
                            content_type='application/json')

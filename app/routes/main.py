@@ -194,12 +194,9 @@ def movie_details(movie_id):
     rating_filter = request.args.get('rating_filter', 'all')
 
     query = Review.query.filter_by(movie_id=movie_id)
-
-    # Apply rating filter
     if rating_filter != 'all':
         query = query.filter(Review.rating >= int(rating_filter))
 
-    # Apply sort order
     if sort == 'newest':
         query = query.order_by(Review.timestamp.desc())
     elif sort == 'oldest':
@@ -270,7 +267,7 @@ def admin_dashboard():
 @role_required('moderator', 'admin')
 
 def moderator_dashboard():
-    return render_template('manager.html')
+    return render_template('moderator.html')
 
 @main.route('/delete_review/<int:review_id>', methods=['POST'])
 @login_required

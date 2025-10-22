@@ -81,7 +81,7 @@ def change_role(user_id):
 @login_required
 @role_required('moderator', 'admin')
 def moderator_dashboard():
-    return render_template('manager.html')
+    return render_template('moderator.html')
 
 
 @admin.route('/movie/<int:movie_id>/delete', methods=['POST'])
