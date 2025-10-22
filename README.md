@@ -14,7 +14,7 @@ There are some pre-added users with the following credentials:
 | -------- | ------- |
 | adminemail@gmail.com  | admin    |
 | moderatoremail@gmail.com | moderator    |
-| useremail@gmail.com    | user   |
+| useremail@gmail.com    | 123456   |
 
 Login:
 
